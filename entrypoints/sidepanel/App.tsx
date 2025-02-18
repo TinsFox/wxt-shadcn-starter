@@ -3,10 +3,10 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion"
+} from "@/components/ui/accordion";
 function App() {
   return (
-    <div className="min-w-[300px] min-h-[300px]">
+    <>
       <h1 className="text-3xl font-bold underline">Hello world!</h1>
       <Accordion type="single" collapsible className="w-full">
         <AccordionItem value="item-1">
@@ -29,8 +29,8 @@ function App() {
           </AccordionContent>
         </AccordionItem>
       </Accordion>
-    </div>
-  )
+    </>
+  );
 }
 
-export default App
+export default App;

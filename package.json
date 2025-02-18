@@ -1,6 +1,6 @@
 {
-  "name": "wxt-shadcn-starter",
-  "description": "manifest.json description",
+  "name": "douyin-crawler-extension",
+  "description": "抖音爬虫插件",
   "private": true,
   "version": "0.0.0",
   "scripts": {
@@ -60,6 +60,7 @@
     "tailwind-merge": "^3.0.1",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^1.1.2",
+    "vite": "5.4.13",
     "zod": "^3.24.2"
   },
   "devDependencies": {
