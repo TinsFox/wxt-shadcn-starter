@@ -1,10 +1,39 @@
-// 定义拦截器接口
+// 处理 XHR 响应的方法
+export const handleXHRResponse = (
+  currentUrl: string,
+  currentMethod: string,
+  response: any,
+  xhr: XMLHttpRequest
+) => {
+  const interceptor = findMatchingInterceptor(currentUrl)
+  if (!interceptor) return
+  console.log("xhr: ", xhr)
+
+  console.log(`触发拦截器: ${interceptor.name}`)
+  const baseRequestInfo = {
+    url: currentUrl,
+    method: currentMethod,
+    response: response,
+    status: xhr.status,
+    headers: xhr.getAllResponseHeaders(),
+  }
+
+  try {
+    const urlObj = new URL(currentUrl)
+    interceptor.onResponse?.({
+      ...baseRequestInfo,
+      queryParams: urlObj.searchParams,
+    })
+  } catch (error) {
+    // 如果 URL 无效，则传入基本信息
+    interceptor.onResponse?.(baseRequestInfo)
+  }
+}
 export interface Interceptor {
   name: string
   url: string | RegExp
   onResponse?: (response: any, params?: URLSearchParams) => void
 }
-
 // 拦截器列表
 export const interceptors: Interceptor[] = [
   {
