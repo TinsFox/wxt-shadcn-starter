@@ -12,6 +12,9 @@ export default defineConfig({
       "alarms",
       "webRequest",
       "webRequestBlocking",
+      "debugger",
+      "scripting",
+      "activeTab",
     ],
     host_permissions: ["*://compass.jinritemai.com/*"],
     web_accessible_resources: [
