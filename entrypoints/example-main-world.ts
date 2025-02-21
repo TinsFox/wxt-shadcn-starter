@@ -30,17 +30,7 @@ export default defineUnlistedScript(() => {
       xhr.send = function (body?: Document | XMLHttpRequestBodyInit | null) {
         xhr.addEventListener("load", function () {
           try {
-            let response: any
-            if (xhr.responseType === "json") {
-              response = xhr.response
-            } else {
-              try {
-                response = JSON.parse(xhr.responseText)
-              } catch {
-                response = xhr.responseText
-              }
-            }
-            handleXHRResponse(currentUrl, currentMethod, response, xhr)
+            handleXHRResponse(xhr, currentMethod)
           } catch (error) {
             console.log("error: ", error)
           }

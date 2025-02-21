@@ -1,10 +1,20 @@
 // 处理 XHR 响应的方法
-export const handleXHRResponse = (
-  currentUrl: string,
-  currentMethod: string,
-  response: any,
-  xhr: XMLHttpRequest
-) => {
+export const handleXHRResponse = (xhr: XMLHttpRequest, method: string) => {
+  // 从 xhr 对象中获取 URL
+  const currentUrl = xhr.responseURL
+
+  // 解析响应数据
+  let response: any
+  if (xhr.responseType === "json") {
+    response = xhr.response
+  } else {
+    try {
+      response = JSON.parse(xhr.responseText)
+    } catch {
+      response = xhr.responseText
+    }
+  }
+
   const interceptor = findMatchingInterceptor(currentUrl)
   if (!interceptor) return
   console.log("xhr: ", xhr)
@@ -12,7 +22,7 @@ export const handleXHRResponse = (
   console.log(`触发拦截器: ${interceptor.name}`)
   const baseRequestInfo = {
     url: currentUrl,
-    method: currentMethod,
+    method: method,
     response: response,
     status: xhr.status,
     headers: xhr.getAllResponseHeaders(),
@@ -20,6 +30,12 @@ export const handleXHRResponse = (
 
   try {
     const urlObj = new URL(currentUrl)
+    console.log('urlObj: ', urlObj);
+    console.log('urlObj: ', urlObj.searchParams);
+    const params = urlObj.searchParams;
+
+    // 将看到所有参数
+    console.log(Object.fromEntries(params));
     interceptor.onResponse?.({
       ...baseRequestInfo,
       queryParams: urlObj.searchParams,
@@ -40,10 +56,7 @@ export const interceptors: Interceptor[] = [
     name: "作者合作列表",
     url: "https://compass.jinritemai.com/compass_api/shop/author/cooperate/list",
     onResponse: (response, params) => {
-      // 可以获取查询参数
-      const pageNo = params?.get("page_no")
-      const pageSize = params?.get("page_size")
-      console.log("处理作者合作列表数据:", response, { pageNo, pageSize })
+      console.log("处理作者合作列表数据:", response)
     },
   },
 ]
