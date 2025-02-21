@@ -34,7 +34,7 @@ export default defineBackground({
         }
 
         // 使用 async/await 处理异步操作
-        ;(async () => {
+        ; (async () => {
           try {
             await attachDebugger(tabId)
 
@@ -48,7 +48,7 @@ export default defineBackground({
             chrome.debugger.detach({ tabId })
 
             sendResponse({ success: true, result })
-          } catch (error) {
+          } catch (error: any) {
             console.error("Error in debugger command:", error)
             sendResponse({ success: false, error: error.message })
           }
