@@ -4,6 +4,7 @@ import {
   findAndClickConfigElement,
   hoverElement,
   selectDateFromCalendar,
+  autoClickNextPage,
 } from "@/lib/element.ts"
 import { initBackgroundScript } from "@/lib/handle-background-script"
 import { wait } from "@/lib/utils.ts"
@@ -12,7 +13,7 @@ export default defineContentScript({
   matches: ["*://*/*"],
   async main() {
     console.log("Injecting script...")
-    await injectScript('/inject.js', {
+    await injectScript("/inject.js", {
       keepInDom: true,
     })
 
@@ -46,6 +47,10 @@ export default defineContentScript({
     await wait(3000)
     // 选择日期
     await selectDateFromCalendar("23")
+
+    // 开始自动翻页
+    await autoClickNextPage()
+
     console.log("Done!")
   },
 })

@@ -215,3 +215,48 @@ export async function selectDateFromCalendar(date: string) {
     console.log(`在多次尝试后仍未找到日期 "${date}"`)
   }
 }
+
+/**
+ * 点击下一页按钮（如果可点击）
+ * @returns Promise<boolean> 是否成功点击
+ */
+export async function clickNextPageButton(): Promise<boolean> {
+  const findNextButton = () => {
+    const nextButton = document.querySelector(".ecom-pagination-next")
+    // 如果按钮存在且不包含 disabled 类，则返回
+    if (
+      nextButton &&
+      !nextButton.classList.contains("ecom-pagination-disabled")
+    ) {
+      return nextButton
+    }
+    return null
+  }
+
+  const nextButton = await retryFindElement(
+    findNextButton,
+    "可点击的下一页按钮"
+  )
+  if (nextButton) {
+    ;(nextButton as HTMLElement).click()
+    console.log('已点击"下一页"按钮')
+    return true
+  }
+  console.log("下一页按钮不可点击或未找到")
+  return false
+}
+
+/**
+ * 持续检查并点击下一页按钮
+ * @param interval 点击间隔(ms)，默认5000ms
+ */
+export async function autoClickNextPage(interval: number = 5000) {
+  while (true) {
+    const clicked = await clickNextPageButton()
+    if (!clicked) {
+      console.log("已到达最后一页或按钮不可点击，停止自动翻页")
+      break
+    }
+    await wait(interval)
+  }
+}
