@@ -16,11 +16,11 @@ export default defineConfig({
       "scripting",
       "activeTab",
     ],
-    host_permissions: ["*://compass.jinritemai.com/*"],
+    host_permissions: ["https://compass.jinritemai.com/*", "https://e-commerce-test.xiaofeilun.cn/e-commerce-api/**"],
     web_accessible_resources: [
       {
-        resources: ["douyin-main-world.js"],
-        matches: ["*://*/*"],
+        resources: ["douyin-main-world.js", "/inject.js"],
+        matches: ['<all_urls>'],
       },
     ],
   },

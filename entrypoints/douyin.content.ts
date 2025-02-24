@@ -12,9 +12,10 @@ export default defineContentScript({
   matches: ["*://*/*"],
   async main() {
     console.log("Injecting script...")
-    await injectScript("/douyin-main-world.js", {
+    await injectScript('/inject.js', {
       keepInDom: true,
     })
+
     initBackgroundScript()
     // 等待页面加载完成
     if (document.readyState !== "complete") {

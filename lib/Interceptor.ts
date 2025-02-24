@@ -62,38 +62,38 @@ export const interceptors: Interceptor[] = [
   {
     name: "作者合作列表",
     url: "https://compass.jinritemai.com/compass_api/shop/author/cooperate/list",
-    onResponse: ({ params, response }) => {
+    onResponse: async ({ params, response }) => {
+      console.log("中间件");
       if (!params) {
         throw new Error("params is null")
       }
-      console.log(import.meta.env.VITE_API_URL)
       const paramsObj = Object.fromEntries(params)
-      console.log("paramsObj: ", paramsObj)
       const { date_type, end_date } = paramsObj
       if (date_type === "2") {
-        console.log("处理自然日数据:", response)
         const { data } = response.response
-        console.log("data: ", data)
         const { data_head, data_result } = data
-        console.log("data_head: ", data_head)
-        console.log("data_result: ", data_result)
-        const postData = {
-          shop_name: "BORF宠物食品旗舰店",
-          day: dayjs(end_date).format("YYYY-MM-DD"),
-          data_head: [],
-          data_result: [],
-        }
-        //
-        apiFetch(`/shop-expert/saveBORFDouShopExpertsByPlugIn`, {
-          method: "POST",
-          body: {
-            shop_name: "BORF宠物食品旗舰店",
-            day: dayjs(end_date).format("YYYY-MM-DD"),
-            data_head: [],
-            data_result: [],
-          },
-        })
-        console.log("postData: ", postData)
+        const result = await apiFetch(
+          `/shop-expert/saveBORFDouShopExpertsByPlugIn`,
+          {
+            method: "POST",
+            body: {
+              shop_name: "BORF宠物食品旗舰店",
+              day: dayjs(end_date).format("YYYY-MM-DD"),
+              data_head,
+              data_result,
+            }
+          }
+        )
+        console.log("result", result);
+        // chrome.runtime.sendMessage({
+        //   type: "save-shop-expert-data",
+        //   payload: {
+        //     shop_name: "BORF宠物食品旗舰店",
+        //     day: dayjs(end_date).format("YYYY-MM-DD"),
+        //     data_head,
+        //     data_result,
+        //   },
+        // })
       }
     },
   },

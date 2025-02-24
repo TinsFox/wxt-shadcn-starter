@@ -1,4 +1,5 @@
 import { initAlarm } from "../lib/alarms"
+import { apiFetch } from "../lib/api-fetch"
 
 export default defineBackground({
   async main() {
@@ -34,7 +35,7 @@ export default defineBackground({
         }
 
         // 使用 async/await 处理异步操作
-        ; (async () => {
+        ;(async () => {
           try {
             await attachDebugger(tabId)
 
@@ -54,6 +55,26 @@ export default defineBackground({
           }
         })()
 
+        return true // 保持消息通道开启
+      }
+
+      // 处理保存店铺专家数据的消息
+      if (message.type === "save-shop-expert-data") {
+        ;(async () => {
+          try {
+            const result = await apiFetch(
+              `/shop-expert/saveBORFDouShopExpertsByPlugIn`,
+              {
+                method: "POST",
+                body: message.payload,
+              }
+            )
+            sendResponse({ success: true, result })
+          } catch (error: any) {
+            console.error("Error saving shop expert data:", error)
+            sendResponse({ success: false, error: error.message })
+          }
+        })()
         return true // 保持消息通道开启
       }
     })
