@@ -19,7 +19,7 @@ export default defineConfig({
     host_permissions: ["*://compass.jinritemai.com/*"],
     web_accessible_resources: [
       {
-        resources: ["example-main-world.js"],
+        resources: ["douyin-main-world.js"],
         matches: ["*://*/*"],
       },
     ],

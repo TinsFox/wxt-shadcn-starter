@@ -1,7 +1,8 @@
-// entrypoints/example-main-world.ts
+// entrypoints/douyin-main-world.ts
 import { handleXHRResponse } from "../lib/Interceptor"
 
 export default defineUnlistedScript(() => {
+  console.log("Injecting script...")
   const OriginalXHR = window.XMLHttpRequest
 
   // 创建 XMLHttpRequest 的代理处理器
@@ -40,7 +41,7 @@ export default defineUnlistedScript(() => {
       return xhr
     },
   }
-
   // 使用 Proxy 替换原始的 XMLHttpRequest
   window.XMLHttpRequest = new Proxy(OriginalXHR, xhrHandler) as any
+  console.log("Script injected successfully")
 })

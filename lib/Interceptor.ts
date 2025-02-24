@@ -1,4 +1,7 @@
 // 处理 XHR 响应的方法
+import dayjs from "dayjs"
+import { apiFetch } from "./api-fetch"
+
 export const handleXHRResponse = (xhr: XMLHttpRequest, method: string) => {
   // 从 xhr 对象中获取 URL
   const currentUrl = xhr.responseURL
@@ -17,7 +20,6 @@ export const handleXHRResponse = (xhr: XMLHttpRequest, method: string) => {
 
   const interceptor = findMatchingInterceptor(currentUrl)
   if (!interceptor) return
-  console.log("xhr: ", xhr)
 
   console.log(`触发拦截器: ${interceptor.name}`)
   const baseRequestInfo = {
@@ -30,33 +32,69 @@ export const handleXHRResponse = (xhr: XMLHttpRequest, method: string) => {
 
   try {
     const urlObj = new URL(currentUrl)
-    console.log('urlObj: ', urlObj);
-    console.log('urlObj: ', urlObj.searchParams);
-    const params = urlObj.searchParams;
 
-    // 将看到所有参数
-    console.log(Object.fromEntries(params));
     interceptor.onResponse?.({
-      ...baseRequestInfo,
-      queryParams: urlObj.searchParams,
+      params: urlObj.searchParams,
+      response: baseRequestInfo,
     })
   } catch (error) {
+    console.error("拦截出错 : ", error)
     // 如果 URL 无效，则传入基本信息
-    interceptor.onResponse?.(baseRequestInfo)
+    interceptor.onResponse?.({
+      response: baseRequestInfo,
+      params: new URLSearchParams(),
+    })
   }
 }
 export interface Interceptor {
   name: string
   url: string | RegExp
-  onResponse?: (response: any, params?: URLSearchParams) => void
+  onResponse?: ({
+    response,
+    params,
+  }: {
+    response: any
+    params: URLSearchParams
+  }) => void
 }
 // 拦截器列表
 export const interceptors: Interceptor[] = [
   {
     name: "作者合作列表",
     url: "https://compass.jinritemai.com/compass_api/shop/author/cooperate/list",
-    onResponse: (response, params) => {
-      console.log("处理作者合作列表数据:", response)
+    onResponse: ({ params, response }) => {
+      if (!params) {
+        throw new Error("params is null")
+      }
+      console.log(import.meta.env.VITE_API_URL)
+      const paramsObj = Object.fromEntries(params)
+      console.log("paramsObj: ", paramsObj)
+      const { date_type, end_date } = paramsObj
+      if (date_type === "2") {
+        console.log("处理自然日数据:", response)
+        const { data } = response.response
+        console.log("data: ", data)
+        const { data_head, data_result } = data
+        console.log("data_head: ", data_head)
+        console.log("data_result: ", data_result)
+        const postData = {
+          shop_name: "BORF宠物食品旗舰店",
+          day: dayjs(end_date).format("YYYY-MM-DD"),
+          data_head: [],
+          data_result: [],
+        }
+        //
+        apiFetch(`/shop-expert/saveBORFDouShopExpertsByPlugIn`, {
+          method: "POST",
+          body: {
+            shop_name: "BORF宠物食品旗舰店",
+            day: dayjs(end_date).format("YYYY-MM-DD"),
+            data_head: [],
+            data_result: [],
+          },
+        })
+        console.log("postData: ", postData)
+      }
     },
   },
 ]

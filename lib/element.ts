@@ -1,38 +1,55 @@
 import { wait } from "@/lib/utils.ts"
 
 /**
+ * 通用的重试查找元素函数
+ * @param findFn 查找元素的函数
+ * @param elementDescription 元素描述（用于日志）
+ * @param maxAttempts 最大重试次数
+ * @param interval 重试间隔(ms)
+ * @returns 找到的元素或null
+ */
+async function retryFindElement<T>(
+  findFn: () => T | null | undefined,
+  elementDescription: string,
+  maxAttempts: number = 10,
+  interval: number = 1000
+): Promise<T | null> {
+  let attempts = 0
+  let element = null
+
+  while (!element && attempts < maxAttempts) {
+    element = findFn()
+    if (!element) {
+      console.log(
+        `第 ${attempts + 1} 次尝试未找到${elementDescription}，等待重试...`
+      )
+      await wait(interval)
+      attempts++
+    }
+  }
+
+  if (!element) {
+    console.log(`在多次尝试后仍未找到${elementDescription}`)
+  }
+
+  return element as T | null
+}
+
+/**
  * 点击配置列表项
  */
-export async function findAndClickElement() {
-  // 定义查找元素的函数，使用更精确的选择器
+export async function findAndClickConfigElement() {
   const findTargetElement = () => {
-    // 使用类名和属性选择器
     const elements = document.querySelectorAll('.CySMU[data-btm-config="true"]')
     return Array.from(elements).find(
       (element) => element.textContent?.trim() === "配置列表项"
     )
   }
 
-  // 尝试查找元素，最多重试10次，每次间隔1秒
-  let targetElement = null
-  let attempts = 0
-  const maxAttempts = 10
-
-  while (!targetElement && attempts < maxAttempts) {
-    targetElement = findTargetElement()
-    if (!targetElement) {
-      console.log(`第 ${attempts + 1} 次尝试未找到元素，等待重试...`)
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      attempts++
-    }
-  }
-
-  // 如果找到元素则点击
+  const targetElement = await retryFindElement(findTargetElement, "配置列表项")
   if (targetElement) {
     ;(targetElement as HTMLElement).click()
     console.log('已点击"配置列表项"元素', targetElement)
-  } else {
-    console.log('在多次尝试后仍未找到"配置列表项"元素')
   }
 }
 
@@ -115,7 +132,6 @@ export function hoverElement(selector: string, isXPath: boolean = false) {
  * 点击实际佣金支出复选框
  */
 export async function findAndClickCheckbox() {
-  // 定义查找复选框的函数
   const findCheckbox = () => {
     const labels = document.querySelectorAll(".ecom-checkbox-wrapper")
     return Array.from(labels)
@@ -123,82 +139,18 @@ export async function findAndClickCheckbox() {
       ?.querySelector('input[type="checkbox"]')
   }
 
-  // 尝试查找元素，最多重试10次，每次间隔1秒
-  let checkbox = null
-  let attempts = 0
-  const maxAttempts = 10
-
-  while (!checkbox && attempts < maxAttempts) {
-    checkbox = findCheckbox()
-    if (!checkbox) {
-      console.log(`第 ${attempts + 1} 次尝试未找到复选框，等待重试...`)
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      attempts++
-    }
-  }
-
-  // 如果找到复选框则点击
+  const checkbox = await retryFindElement(findCheckbox, "实际佣金支出复选框")
   if (checkbox) {
     await wait(1000)
     ;(checkbox as HTMLElement).click()
     console.log('已点击"实际佣金支出"复选框', checkbox)
-  } else {
-    console.log('在多次尝试后仍未找到"实际佣金支出"复选框')
-  }
-}
-
-/**
- * 点击自然日单选按钮并选择日期
- */
-async function findAndClickRadioButton() {
-  // 定义查找单选按钮的函数
-  const findRadio = () => {
-    const labels = document.querySelectorAll(".ecom-radio-button-wrapper")
-    return Array.from(labels).find(
-      (label) => label.textContent?.trim() === "自然日"
-    )
-  }
-
-  // 尝试查找元素，最多重试10次，每次间隔1秒
-  let radioWrapper = null
-  let attempts = 0
-  const maxAttempts = 10
-
-  while (!radioWrapper && attempts < maxAttempts) {
-    radioWrapper = findRadio()
-    if (!radioWrapper) {
-      console.log(`第 ${attempts + 1} 次尝试未找到自然日单选按钮，等待重试...`)
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      attempts++
-    }
-  }
-
-  // 如果找到单选按钮
-  if (radioWrapper) {
-    console.log("radioWrapper: ", radioWrapper)
-    const radio = radioWrapper.querySelector('input[type="radio"]')
-    if (radio) {
-      // 1. 点击单选按钮
-      ;(radio as HTMLElement).click()
-      console.log('已点击"自然日"单选按钮')
-
-      // 2. 使用 hoverElement 函数触发悬停
-      try {
-        await hoverElement(".ecom-radio-button-wrapper")
-        console.log("已触发鼠标悬浮事件")
-      } catch (error) {
-        console.error("触发悬停事件失败:", error)
-      }
-    }
-  } else {
-    console.log('在多次尝试后仍未找到"自然日"单选按钮')
   }
 }
 
 /**
  * 点击确定按钮
  */
-async function findAndClickConfirmButton() {
+export async function findAndClickConfirmButton() {
   // 定义查找按钮的函数
   const findButton = () => {
     const buttons = document.querySelectorAll(".ecom-btn.ecom-btn-primary")
