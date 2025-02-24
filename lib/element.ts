@@ -183,36 +183,50 @@ export async function findAndClickConfirmButton() {
 }
 
 /**
- * 在日期选择器中选择指定日期
+ * 在日历上选择指定日期
  * @param date 要选择的日期字符串
  */
 export async function selectDateFromCalendar(date: string) {
-  // 定义查找日期单元格的函数
-  const findDateCell = () => {
-    const cells = document.querySelectorAll(".ecom-picker-cell-inner")
-    return Array.from(cells).find((cell) => cell.textContent?.trim() === date)
-  }
+  // 日历元素的 XPath
+  const calendarXPath =
+    '//*[@id="root"]/div[1]/div/div[2]/div/div[2]/div/div/label[4]'
 
-  // 尝试查找元素，最多重试10次，每次间隔1秒
-  let dateCell = null
-  let attempts = 0
-  const maxAttempts = 10
+  try {
+    // 先悬停在日历元素上
+    await hoverElement(calendarXPath, true)
+    console.log("成功触发日历悬停事件")
 
-  while (!dateCell && attempts < maxAttempts) {
-    dateCell = findDateCell()
-    if (!dateCell) {
-      console.log(`第 ${attempts + 1} 次尝试未找到日期单元格，等待重试...`)
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      attempts++
+    // 定义查找日期单元格的函数
+    const findDateCell = () => {
+      const cells = document.querySelectorAll(".ecom-picker-cell-inner")
+      return Array.from(cells).find((cell) => cell.textContent?.trim() === date)
     }
-  }
 
-  // 如果找到日期单元格则点击
-  if (dateCell) {
-    ;(dateCell as HTMLElement).click()
-    console.log(`已点击日期 "${date}"`, dateCell)
-  } else {
-    console.log(`在多次尝试后仍未找到日期 "${date}"`)
+    // 尝试查找元素，最多重试10次，每次间隔1秒
+    let dateCell = null
+    let attempts = 0
+    const maxAttempts = 10
+
+    while (!dateCell && attempts < maxAttempts) {
+      dateCell = findDateCell()
+      if (!dateCell) {
+        console.log(`第 ${attempts + 1} 次尝试未找到日期单元格，等待重试...`)
+        await wait(1000)
+        // 如果找不到日期单元格，重新悬停
+        await hoverElement(calendarXPath, true)
+        attempts++
+      }
+    }
+
+    // 如果找到日期单元格则点击
+    if (dateCell) {
+      ;(dateCell as HTMLElement).click()
+      console.log(`已点击日期 "${date}"`, dateCell)
+    } else {
+      console.log(`在多次尝试后仍未找到日期 "${date}"`)
+    }
+  } catch (error) {
+    console.error("选择日期失败:", error)
   }
 }
 

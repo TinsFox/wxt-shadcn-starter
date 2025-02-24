@@ -63,7 +63,7 @@ export const interceptors: Interceptor[] = [
     name: "作者合作列表",
     url: "https://compass.jinritemai.com/compass_api/shop/author/cooperate/list",
     onResponse: async ({ params, response }) => {
-      console.log("中间件");
+      console.log("中间件")
       if (!params) {
         throw new Error("params is null")
       }
@@ -72,6 +72,7 @@ export const interceptors: Interceptor[] = [
       if (date_type === "2") {
         const { data } = response.response
         const { data_head, data_result } = data
+        console.log("现在上报的数据是", dayjs(end_date).format("YYYY-MM-DD"))
         const result = await apiFetch(
           `/shop-expert/saveBORFDouShopExpertsByPlugIn`,
           {
@@ -81,10 +82,10 @@ export const interceptors: Interceptor[] = [
               day: dayjs(end_date).format("YYYY-MM-DD"),
               data_head,
               data_result,
-            }
+            },
           }
         )
-        console.log("result", result);
+        console.log("result", result)
         // chrome.runtime.sendMessage({
         //   type: "save-shop-expert-data",
         //   payload: {

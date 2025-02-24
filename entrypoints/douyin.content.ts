@@ -2,7 +2,6 @@ import {
   findAndClickCheckbox,
   findAndClickConfirmButton,
   findAndClickConfigElement,
-  hoverElement,
   selectDateFromCalendar,
   autoClickNextPage,
 } from "@/lib/element.ts"
@@ -42,24 +41,13 @@ export default defineContentScript({
 
     // 处理每一天的数据
     for (const date of dates) {
-      try {
-        await hoverElement(
-          '//*[@id="root"]/div[1]/div/div[2]/div/div[2]/div/div/label[4]',
-          true
-        )
-        console.log("成功触发悬停事件")
-      } catch (error) {
-        console.error("触发悬停事件失败:", error)
-      }
-      await wait(3000)
-
-      // 选择日期
+      // 选择日期（现在包含了悬停功能）
       await selectDateFromCalendar(date)
       await wait(3000)
 
       // 处理当天的所有分页数据
       await autoClickNextPage()
-      await wait(3000) // 等待一下再处理下一天
+      await wait(1000 * 60) // 等待一下再处理下一天
     }
 
     console.log("Done!")
