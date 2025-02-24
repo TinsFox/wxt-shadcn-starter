@@ -7,6 +7,7 @@ import {
 } from "@/lib/element.ts"
 import { initBackgroundScript } from "@/lib/handle-background-script"
 import { wait } from "@/lib/utils.ts"
+import { TaskQueue } from "@/lib/queue.ts"
 import dayjs from "dayjs"
 
 export default defineContentScript({
@@ -23,14 +24,38 @@ export default defineContentScript({
       await new Promise((resolve) => window.addEventListener("load", resolve))
     }
 
-    await wait(3000)
-    // 第一次执行的配置操作
-    await findAndClickConfigElement()
-    await wait(3000)
-    await findAndClickCheckbox()
-    await wait(1000)
-    await findAndClickConfirmButton()
-    await wait(3000)
+    const queue = new TaskQueue({
+      maxRetries: 3,
+      defaultDelay: 3000,
+      onError: (error, taskName) => {
+        console.error(`Task ${taskName} failed:`, error)
+      },
+      onSuccess: (_, taskName) => {
+        console.log(`Task ${taskName} completed successfully`)
+      },
+      onComplete: (results) => {
+        console.log("All tasks completed:", results)
+      },
+    })
+
+    // 初始配置任务
+    queue
+      .addTask({
+        name: "Initial wait",
+        execute: () => wait(3000),
+      })
+      .addTask({
+        name: "Click config element",
+        execute: () => findAndClickConfigElement(),
+      })
+      .addTask({
+        name: "Click checkbox",
+        execute: () => findAndClickCheckbox(),
+      })
+      .addTask({
+        name: "Click confirm button",
+        execute: () => findAndClickConfirmButton(),
+      })
 
     // 获取前三天的日期
     const dates = Array.from({ length: 3 }, (_, i) => {
@@ -39,15 +64,25 @@ export default defineContentScript({
         .format("DD")
     })
 
-    // 处理每一天的数据
+    // 添加每天的数据处理任务
     for (const date of dates) {
-      // 选择日期（现在包含了悬停功能）
-      await selectDateFromCalendar(date)
-      await wait(3000)
+      queue
+        .addTask({
+          name: `Select date ${date}`,
+          execute: () => selectDateFromCalendar(date),
+        })
+        .addTask({
+          name: `Process pages for date ${date}`,
+          execute: () => autoClickNextPage(),
+          delay: 60000, // 等待一分钟再处理下一天
+        })
+    }
 
-      // 处理当天的所有分页数据
-      await autoClickNextPage()
-      await wait(1000 * 60) // 等待一下再处理下一天
+    try {
+      const results = await queue.start()
+      console.log("All tasks completed:", results)
+    } catch (error) {
+      console.error("Queue execution failed:", error)
     }
 
     console.log("Done!")

@@ -13,7 +13,7 @@ async function retryFindElement<T>(
   elementDescription: string,
   maxAttempts: number = 10,
   interval: number = 1000
-): Promise<T | null> {
+): Promise<T> {
   let attempts = 0
   let element = null
 
@@ -29,10 +29,10 @@ async function retryFindElement<T>(
   }
 
   if (!element) {
-    console.log(`在多次尝试后仍未找到${elementDescription}`)
+    throw new Error(`在${maxAttempts}次尝试后仍未找到${elementDescription}`)
   }
 
-  return element as T | null
+  return element as T
 }
 
 /**
@@ -47,10 +47,8 @@ export async function findAndClickConfigElement() {
   }
 
   const targetElement = await retryFindElement(findTargetElement, "配置列表项")
-  if (targetElement) {
-    ;(targetElement as HTMLElement).click()
-    console.log('已点击"配置列表项"元素', targetElement)
-  }
+  ;(targetElement as HTMLElement).click()
+  console.log('已点击"配置列表项"元素', targetElement)
 }
 
 /**
@@ -140,18 +138,15 @@ export async function findAndClickCheckbox() {
   }
 
   const checkbox = await retryFindElement(findCheckbox, "实际佣金支出复选框")
-  if (checkbox) {
-    await wait(1000)
-    ;(checkbox as HTMLElement).click()
-    console.log('已点击"实际佣金支出"复选框', checkbox)
-  }
+  await wait(1000)
+  ;(checkbox as HTMLElement).click()
+  console.log('已点击"实际佣金支出"复选框', checkbox)
 }
 
 /**
  * 点击确定按钮
  */
 export async function findAndClickConfirmButton() {
-  // 定义查找按钮的函数
   const findButton = () => {
     const buttons = document.querySelectorAll(".ecom-btn.ecom-btn-primary")
     return Array.from(buttons).find(
@@ -159,27 +154,9 @@ export async function findAndClickConfirmButton() {
     )
   }
 
-  // 尝试查找元素，最多重试10次，每次间隔1秒
-  let button = null
-  let attempts = 0
-  const maxAttempts = 10
-
-  while (!button && attempts < maxAttempts) {
-    button = findButton()
-    if (!button) {
-      console.log(`第 ${attempts + 1} 次尝试未找到确定按钮，等待重试...`)
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      attempts++
-    }
-  }
-
-  // 如果找到按钮则点击
-  if (button) {
-    ;(button as HTMLElement).click()
-    console.log('已点击"确定"按钮', button)
-  } else {
-    console.log('在多次尝试后仍未找到"确定"按钮')
-  }
+  const button = await retryFindElement(findButton, "确定按钮")
+  ;(button as HTMLElement).click()
+  console.log('已点击"确定"按钮', button)
 }
 
 /**
@@ -247,17 +224,21 @@ export async function clickNextPageButton(): Promise<boolean> {
     return null
   }
 
-  const nextButton = await retryFindElement(
-    findNextButton,
-    "可点击的下一页按钮"
-  )
-  if (nextButton) {
+  try {
+    const nextButton = await retryFindElement(
+      findNextButton,
+      "可点击的下一页按钮"
+    )
     ;(nextButton as HTMLElement).click()
     console.log('已点击"下一页"按钮')
     return true
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("仍未找到")) {
+      console.log("下一页按钮不可点击或未找到")
+      return false
+    }
+    throw error // 重新抛出其他类型的错误
   }
-  console.log("下一页按钮不可点击或未找到")
-  return false
 }
 
 /**
