@@ -1,4 +1,4 @@
-import { wait } from "@/lib/utils.ts"
+import { wait } from "@/lib/utils.ts";
 
 /**
  * 通用的重试查找元素函数
@@ -12,27 +12,27 @@ async function retryFindElement<T>(
   findFn: () => T | null | undefined,
   elementDescription: string,
   maxAttempts: number = 10,
-  interval: number = 1000
+  interval: number = 1000,
 ): Promise<T> {
-  let attempts = 0
-  let element = null
+  let attempts = 0;
+  let element = null;
 
   while (!element && attempts < maxAttempts) {
-    element = findFn()
+    element = findFn();
     if (!element) {
       console.log(
-        `第 ${attempts + 1} 次尝试未找到${elementDescription}，等待重试...`
-      )
-      await wait(interval)
-      attempts++
+        `第 ${attempts + 1} 次尝试未找到${elementDescription}，等待重试...`,
+      );
+      await wait(interval);
+      attempts++;
     }
   }
 
   if (!element) {
-    throw new Error(`在${maxAttempts}次尝试后仍未找到${elementDescription}`)
+    throw new Error(`在${maxAttempts}次尝试后仍未找到${elementDescription}`);
   }
 
-  return element as T
+  return element as T;
 }
 
 /**
@@ -40,15 +40,17 @@ async function retryFindElement<T>(
  */
 export async function findAndClickConfigElement() {
   const findTargetElement = () => {
-    const elements = document.querySelectorAll('.CySMU[data-btm-config="true"]')
+    const elements = document.querySelectorAll(
+      '.CySMU[data-btm-config="true"]',
+    );
     return Array.from(elements).find(
-      (element) => element.textContent?.trim() === "配置列表项"
-    )
-  }
+      (element) => element.textContent?.trim() === "配置列表项",
+    );
+  };
 
-  const targetElement = await retryFindElement(findTargetElement, "配置列表项")
-  ;(targetElement as HTMLElement).click()
-  console.log('已点击"配置列表项"元素', targetElement)
+  const targetElement = await retryFindElement(findTargetElement, "配置列表项");
+  (targetElement as HTMLElement).click();
+  console.log('已点击"配置列表项"元素', targetElement);
 }
 
 /**
@@ -67,143 +69,163 @@ function sendDebuggerCommand(method: string, params: any): Promise<any> {
       },
       (response) => {
         if (chrome.runtime.lastError) {
-          console.error("Runtime error:", chrome.runtime.lastError)
-          reject(chrome.runtime.lastError)
+          console.error("Runtime error:", chrome.runtime.lastError);
+          reject(chrome.runtime.lastError);
         } else {
-          resolve(response)
+          resolve(response);
         }
-      }
-    )
-  })
+      },
+    );
+  });
 }
 
 /**
  * 悬浮元素
  * @param selector XPath 选择器或 CSS 选择器
+ * @param hoverDuration 悬停时间(毫秒)
  * @param isXPath 是否为 XPath 选择器
  * @returns
  */
-export function hoverElement(selector: string, isXPath: boolean = false) {
-  return new Promise((resolve, reject) => {
+export function hoverElement(
+  selector: string,
+  hoverDuration: number = 3000,
+  isXPath: boolean = false,
+) {
+  return new Promise(async (resolve, reject) => {
     try {
       // 根据选择器类型查找目标元素
-      const element = isXPath
-        ? document.evaluate(
-            selector,
-            document,
-            null,
-            XPathResult.FIRST_ORDERED_NODE_TYPE,
-            null
-          ).singleNodeValue
-        : document.querySelector(selector)
+      // const element = isXPath
+      //   ? document.evaluate(
+      //     selector,
+      //     document,
+      //     null,
+      //     XPathResult.FIRST_ORDERED_NODE_TYPE,
+      //     null
+      //   ).singleNodeValue
+      //   : document.querySelector(selector)
+      const element = document
+        ?.querySelector('.ecom-radio-button-wrapper input[value="day"]')
+        ?.closest("label") as unknown as HTMLElement;
 
       if (!element) {
-        throw new Error(`Element not found: ${selector}`)
+        throw new Error(`悬停元素 Element not found: ${selector}`);
       }
-      console.log("element: ", element)
-
+      console.log("element: ", element);
+      simulateMouseEvent(element, "mouseover");
       // 获取元素位置信息
-      const { width, height, x, y } = (
-        element as Element
-      ).getBoundingClientRect()
+      // const { width, height, x, y } = (
+      //   element as Element
+      // ).getBoundingClientRect()
+      // const centerX = x + width / 2 - 100
+      // const centerY = y + height / 2
 
-      // 构造鼠标事件参数
-      const mouseEventParams = {
-        type: "mousePressed",
-        x: x + width / 2,
-        y: y + height / 2,
-        button: "left",
-        clickCount: 1,
-      }
+      // 1. 移动到元素上 (mouseMove)
 
-      // 使用新的 sendDebuggerCommand 方法
-      sendDebuggerCommand("Input.dispatchMouseEvent", mouseEventParams)
-        .then(resolve)
-        .catch(reject)
+      // await sendDebuggerCommand("Input.dispatchMouseEvent", {
+      //   type: "mouseenter",
+      //   x: centerX,
+      //   y: centerY,
+      // });
+      // (element as HTMLElement).click()
+      // console.log("等待移出");
+      // 2. 等待指定的悬停时间
+      // await new Promise((resolve) => setTimeout(resolve, hoverDuration))
+      // console.log("移开鼠标");
+      // 3. 移开鼠标 (可选)
+      // await sendDebuggerCommand("Input.dispatchMouseEvent", {
+      //   type: "mouseMoved",
+      //   x: centerX + width, // 移到元素右侧
+      //   y: centerY,
+      // })
+      console.log("悬停结束");
+      resolve({
+        element,
+      });
     } catch (error) {
-      reject(error)
+      reject(error);
     }
-  })
+  });
 }
 
 /**
  * 点击实际佣金支出复选框
  */
-export async function findAndClickCheckbox() {
+export async function selectCommissionCheckbox() {
   const findCheckbox = () => {
-    const labels = document.querySelectorAll(".ecom-checkbox-wrapper")
+    const labels = document.querySelectorAll(".ecom-checkbox-wrapper");
     return Array.from(labels)
       .find((label) => label.textContent?.trim() === "实际佣金支出")
-      ?.querySelector('input[type="checkbox"]')
-  }
+      ?.querySelector('input[type="checkbox"]');
+  };
 
-  const checkbox = await retryFindElement(findCheckbox, "实际佣金支出复选框")
-  await wait(1000)
-  ;(checkbox as HTMLElement).click()
-  console.log('已点击"实际佣金支出"复选框', checkbox)
+  const checkbox = await retryFindElement(findCheckbox, "实际佣金支出复选框");
+  await wait(1000);
+  (checkbox as HTMLElement).click();
+  console.log('已点击"实际佣金支出"复选框', checkbox);
 }
 
 /**
  * 点击确定按钮
  */
-export async function findAndClickConfirmButton() {
+export async function clickConfirmButton() {
   const findButton = () => {
-    const buttons = document.querySelectorAll(".ecom-btn.ecom-btn-primary")
+    const buttons = document.querySelectorAll(".ecom-btn.ecom-btn-primary");
     return Array.from(buttons).find(
-      (button) => button.textContent?.trim() === "确定"
-    )
-  }
+      (button) => button.textContent?.trim() === "确定",
+    );
+  };
 
-  const button = await retryFindElement(findButton, "确定按钮")
-  ;(button as HTMLElement).click()
-  console.log('已点击"确定"按钮', button)
+  const button = await retryFindElement(findButton, "确定按钮");
+  (button as HTMLElement).click();
+  console.log('已点击"确定"按钮', button);
 }
-
+// 日历元素的 XPath
+export const calendarXPath =
+  "/html/body/div[1]/div/div[1]/div[3]/div/div[2]/div/div/div/div/div[2]/div/div[1]/div/div[2]/div/div[2]/div/div/label[4]";
 /**
  * 在日历上选择指定日期
  * @param date 要选择的日期字符串
  */
 export async function selectDateFromCalendar(date: string) {
-  // 日历元素的 XPath
-  const calendarXPath =
-    '//*[@id="root"]/div[1]/div/div[2]/div/div[2]/div/div/label[4]'
-
   try {
     // 先悬停在日历元素上
-    await hoverElement(calendarXPath, true)
-    console.log("成功触发日历悬停事件")
+    await hoverElement(calendarXPath, 3000, true);
+    console.log("成功触发日历悬停事件");
 
     // 定义查找日期单元格的函数
     const findDateCell = () => {
-      const cells = document.querySelectorAll(".ecom-picker-cell-inner")
-      return Array.from(cells).find((cell) => cell.textContent?.trim() === date)
-    }
+      const cells = document.querySelectorAll(".ecom-picker-cell-inner");
+      return Array.from(cells).find(
+        (cell) => cell.textContent?.trim() === date,
+      );
+    };
 
     // 尝试查找元素，最多重试10次，每次间隔1秒
-    let dateCell = null
-    let attempts = 0
-    const maxAttempts = 10
+    let dateCell = null;
+    let attempts = 0;
+    const maxAttempts = 10;
 
     while (!dateCell && attempts < maxAttempts) {
-      dateCell = findDateCell()
+      dateCell = findDateCell();
       if (!dateCell) {
-        console.log(`第 ${attempts + 1} 次尝试未找到日期单元格，等待重试...`)
-        await wait(1000)
+        console.log(`第 ${attempts + 1} 次尝试未找到日期单元格，等待重试...`);
+        await wait(1000);
         // 如果找不到日期单元格，重新悬停
-        await hoverElement(calendarXPath, true)
-        attempts++
+        await hoverElement(calendarXPath, 3000, true);
+        attempts++;
       }
     }
 
     // 如果找到日期单元格则点击
     if (dateCell) {
-      ;(dateCell as HTMLElement).click()
-      console.log(`已点击日期 "${date}"`, dateCell)
+      console.log(`findDate ${date} Cell:`, dateCell);
+      (dateCell as HTMLElement).click();
+      console.log(`已点击日期 "${date}"`, dateCell);
     } else {
-      console.log(`在多次尝试后仍未找到日期 "${date}"`)
+      console.log(`在多次尝试后仍未找到日期 "${date}"`);
     }
   } catch (error) {
-    console.error("选择日期失败:", error)
+    console.error("选择日期失败:", error);
   }
 }
 
@@ -213,31 +235,31 @@ export async function selectDateFromCalendar(date: string) {
  */
 export async function clickNextPageButton(): Promise<boolean> {
   const findNextButton = () => {
-    const nextButton = document.querySelector(".ecom-pagination-next")
+    const nextButton = document.querySelector(".ecom-pagination-next");
     // 如果按钮存在且不包含 disabled 类，则返回
     if (
       nextButton &&
       !nextButton.classList.contains("ecom-pagination-disabled")
     ) {
-      return nextButton
+      return nextButton;
     }
-    return null
-  }
+    return null;
+  };
 
   try {
     const nextButton = await retryFindElement(
       findNextButton,
-      "可点击的下一页按钮"
-    )
-    ;(nextButton as HTMLElement).click()
-    console.log('已点击"下一页"按钮')
-    return true
+      "可点击的下一页按钮",
+    );
+    (nextButton as HTMLElement).click();
+    console.log('已点击"下一页"按钮');
+    return true;
   } catch (error) {
     if (error instanceof Error && error.message.includes("仍未找到")) {
-      console.log("下一页按钮不可点击或未找到")
-      return false
+      console.log("下一页按钮不可点击或未找到");
+      return false;
     }
-    throw error // 重新抛出其他类型的错误
+    throw error; // 重新抛出其他类型的错误
   }
 }
 
@@ -247,11 +269,20 @@ export async function clickNextPageButton(): Promise<boolean> {
  */
 export async function autoClickNextPage(interval: number = 5000) {
   while (true) {
-    const clicked = await clickNextPageButton()
+    const clicked = await clickNextPageButton();
     if (!clicked) {
-      console.log("已到达最后一页或按钮不可点击，停止自动翻页")
-      break
+      console.log("已到达最后一页或按钮不可点击，停止自动翻页");
+      break;
     }
-    await wait(interval)
+    await wait(interval);
   }
+}
+function simulateMouseEvent(element: HTMLElement, eventType: string) {
+  const event = new MouseEvent(eventType, {
+    view: window,
+    bubbles: true,
+    cancelable: true,
+    buttons: 1,
+  });
+  element.dispatchEvent(event);
 }
