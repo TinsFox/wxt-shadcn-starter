@@ -10,6 +10,12 @@ import { wait, getTargetDates, showNotification } from "./utils";
 
 export async function fetchData() {
   await showNotification();
+  chrome.tabs.create({
+    url: "https://compass.jinritemai.com/shop/talent-list",
+    active: true, // 是否立即切换到新标签页
+    pinned: false, // 是否固定标签页
+    index: 0, // 新标签页的位置（0表示最左边）
+  });
   // 初始配置任务
   const queue = new TaskQueue({
     maxRetries: 3,

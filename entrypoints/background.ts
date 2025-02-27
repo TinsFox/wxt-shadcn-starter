@@ -18,16 +18,21 @@ export default defineBackground({
     });
     const jobs = registerJobScheduler();
     await jobs.scheduleJob({
-      id: "fetchData",
+      id: "fetchData11",
       type: "cron",
-      expression: "0 8 * * *",
+      expression: "0 11 * * *",
       execute: async () => {
-        showNotification();
         await fetchData();
-        console.log("Executed job once");
       },
     });
-
+    await jobs.scheduleJob({
+      id: "fetchData12",
+      type: "cron",
+      expression: "0 12 * * *",
+      execute: async () => {
+        await fetchData();
+      },
+    });
     // await jobs.scheduleJob({
     //   id: "test",
     //   type: "cron",
