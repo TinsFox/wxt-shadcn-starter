@@ -1,5 +1,9 @@
+import dayjs from "dayjs"
 import { Button } from "./ui/button"
 import { sendMessage } from "@/lib/messaging"
+import relativeTime from "dayjs/plugin/relativeTime"
+
+dayjs.extend(relativeTime)
 
 export function CommonApp() {
   return (
@@ -13,6 +17,7 @@ export function CommonApp() {
             <p>
               {import.meta.env.MODE} {buildTime}
             </p>
+            <p>{dayjs(buildTime).fromNow()}</p>
           </div>
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
             抓取并分析抖音数据
