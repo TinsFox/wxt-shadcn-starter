@@ -3,6 +3,9 @@ import { defineJobs } from "@/lib/jobs";
 
 export default defineBackground({
   async main() {
+    chrome.runtime.onInstalled.addListener(() => {
+      chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+    });
     getStartedPage();
     defineJobs();
 

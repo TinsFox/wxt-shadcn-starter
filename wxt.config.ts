@@ -18,6 +18,7 @@ export default defineConfig({
       "scripting",
       "activeTab",
       "notifications",
+      "sidePanel",
     ],
     host_permissions: [
       "https://compass.jinritemai.com/*",
@@ -30,6 +31,9 @@ export default defineConfig({
         matches: ["<all_urls>"],
       },
     ],
+    side_panel: {
+      default_path: "sidepanel.html",
+    },
   },
   vite: () => ({
     define: {
