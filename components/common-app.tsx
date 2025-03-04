@@ -28,7 +28,17 @@ export function CommonApp() {
           <Button
             className="w-full text-white transition-colors bg-black hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
             onClick={async () => {
-              sendMessage("fetchData", undefined)
+              console.log("Sending fetchData message from popup")
+              try {
+                chrome.runtime.sendMessage(
+                  { type: "fetchData" },
+                  (response) => {
+                    console.log("Popup received response:", response)
+                  }
+                )
+              } catch (error) {
+                console.error("Error sending message:", error)
+              }
             }}
           >
             抓取数据

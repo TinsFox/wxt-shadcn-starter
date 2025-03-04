@@ -1,15 +1,4 @@
-import {
-  hoverElement,
-  calendarXPath,
-  findAndClickConfigElement,
-  selectCommissionCheckbox,
-  clickConfirmButton,
-} from "@/lib/element.ts"
 import { initBackgroundScript } from "@/lib/handle-background-script"
-import { getTargetDates, wait } from "@/lib/utils.ts"
-import ReactDOM from "react-dom/client"
-import App from "./App.tsx"
-import { onMessage } from "@/lib/messaging.ts"
 import { fetchData } from "@/lib/task.ts"
 
 export default defineContentScript({
@@ -19,70 +8,53 @@ export default defineContentScript({
   ],
   runAt: "document_end",
   async main() {
+    console.log("Content script initialized")
+
     await injectScript("/inject.js", {
       keepInDom: true,
     })
 
-    initBackgroundScript()
+    // initBackgroundScript()
+
     // 等待页面加载完成
     if (document.readyState !== "complete") {
       await new Promise((resolve) => window.addEventListener("load", resolve))
     }
-    onMessage("setConfig", async (message) => {
-      await findAndClickConfigElement()
-    })
-    onMessage("fetchData", async () => {
-      await fetchData()
-    })
-    onMessage("money", async () => {
-      await selectCommissionCheckbox()
-      await wait(3000)
-      await clickConfirmButton()
-    })
-    onMessage("hover", async () => {
-      await hoverElement(calendarXPath, 3000, true)
-    })
-    onMessage("date", async () => {
-      const dates = getTargetDates()
-      for (const date of dates) {
-        await hoverElement(calendarXPath, 3000, true)
-        const findDateCell = () => {
-          const cells = document.querySelectorAll(".ecom-picker-cell-inner")
-          return Array.from(cells).find(
-            (cell) => cell.textContent?.trim() === date
-          )
-        }
-        const dateCell = findDateCell()
 
-        if (dateCell) {
-          ;(dateCell as HTMLElement).click()
-          // 使用明确的 Promise 来确保等待
-          await new Promise((resolve) => setTimeout(resolve, 10000))
-        } else {
+    // 监听来自background的消息
+    chrome.runtime.onMessage.addListener(
+      async (message, sender, sendResponse) => {
+        console.log("Content script received message:", message)
+
+        switch (message.type) {
+          case "fetchData":
+            try {
+              const result = await fetchData()
+              console.log("Fetch data result:", result)
+              sendResponse({ success: true, data: result })
+            } catch (error) {
+              console.error("Error fetching data:", error)
+              sendResponse({
+                success: false,
+                error: error instanceof Error ? error.message : String(error),
+              })
+            }
+            break
+
+          // 添加其他消息类型的处理
+          case "hover":
+          case "date":
+          case "setConfig":
+          case "money":
+          case "getAlarms":
+            console.log(`Handling ${message.type} message`)
+            // 在这里添加相应的处理逻辑
+            sendResponse({ success: true, message: `Handled ${message.type}` })
+            break
         }
+
+        return true // 保持消息通道开启
       }
-    })
-
-    // const ui = createIntegratedUi(ctx, {
-    //   tag: "wxt-react-example",
-    //   position: "inline",
-    //   append: "first",
-    //   onMount: (container) => {
-    //     // Don't mount react app directly on <body>
-    //     const wrapper = document.createElement("div")
-    //     wrapper.style.backgroundColor = "rgba(0, 0, 0, 0.5)"
-    //     container.append(wrapper)
-
-    //     const root = ReactDOM.createRoot(wrapper)
-    //     root.render(<App />)
-    //     return { root, wrapper }
-    //   },
-    //   onRemove: (elements) => {
-    //     elements?.root.unmount()
-    //     elements?.wrapper.remove()
-    //   },
-    // })
-
-    // ui.mount()
+    )
   },
 })

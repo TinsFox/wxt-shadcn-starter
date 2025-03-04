@@ -18,7 +18,7 @@ export function getTargetDates() {
   return Array.from({ length: 3 }, (_, i) => {
     return dayjs()
       .subtract(i + 1, "day")
-      .format("DD");
+      .format("D");
   });
 }
 // 显示通知的函数
