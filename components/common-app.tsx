@@ -90,7 +90,7 @@ export function CommonApp() {
               console.log("Sending fetchData message from popup")
               try {
                 chrome.runtime.sendMessage(
-                  { type: "fetchData" },
+                  { type: "fetchData", timestamp: Date.now() },
                   (response) => {
                     console.log("Popup received response:", response)
                   }
