@@ -1,66 +1,12 @@
-import { showNotification, wait } from "@/lib/utils"
-import { apiFetch } from "../lib/api-fetch"
-import { onMessage, sendMessage } from "@/lib/messaging"
+import { wait } from "@/lib/utils"
 import { attachDebugger, sendDebugCommand } from "@/lib/debug"
-import { fetchData } from "@/lib/task"
-import { registerJobScheduler } from "@/lib/job-scheduler"
+import { getStartedPage } from "@/lib/get-started-page"
+import { defineJobs } from "@/lib/jobs"
 
 export default defineBackground({
   async main() {
-    if (import.meta.env.PROD) {
-      browser.runtime.onInstalled.addListener(async ({ reason }) => {
-        if (reason !== "install") return
-        // Open a tab on install
-        await browser.tabs.create({
-          url: browser.runtime.getURL("/get-started.html"),
-          active: true,
-        })
-      })
-    }
-    const jobs = registerJobScheduler()
-    await jobs.scheduleJob({
-      id: "fetchData11",
-      type: "cron",
-      expression: "0 11 * * *",
-      execute: async () => {
-        await fetchData()
-      },
-    })
-    await jobs.scheduleJob({
-      id: "fetchData12",
-      type: "cron",
-      expression: "0 12 * * *",
-      execute: async () => {
-        await fetchData()
-      },
-    })
-    // await jobs.scheduleJob({
-    //   id: "test",
-    //   type: "cron",
-    //   expression: "*/2 * * * *",
-    //   execute: async () => {
-    //     chrome.tabs.create({
-    //       url: "https://compass.jinritemai.com/shop/talent-list",
-    //       active: true, // 是否立即切换到新标签页
-    //       pinned: false, // 是否固定标签页
-    //       index: 0, // 新标签页的位置（0表示最左边）
-    //     });
-    //     console.log("show test notification");
-    //     showNotification();
-    //   },
-    // });
-
-    onMessage("saveShopExpertData", async (data) => {
-      console.log("saveShopExpertData: ", data)
-      const result = await apiFetch(
-        "/shop-expert/saveBORFDouShopExpertsByPlugIn",
-        {
-          method: "POST",
-          body: data,
-        }
-      )
-      console.log("result: ", result)
-    })
+    getStartedPage()
+    defineJobs()
     // 监听来自content script的消息
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       console.log("content script message: ", message)
@@ -93,27 +39,6 @@ export default defineBackground({
 
         return true // 保持消息通道开启
       }
-
-      // 处理保存店铺专家数据的消息
-      if (message.type === "save-shop-expert-data") {
-        ;(async () => {
-          try {
-            const result = await apiFetch(
-              "/shop-expert/saveBORFDouShopExpertsByPlugIn",
-              {
-                method: "POST",
-                body: message.payload,
-              }
-            )
-            sendResponse({ success: true, result })
-          } catch (error: any) {
-            console.error("Error saving shop expert data:", error)
-            sendResponse({ success: false, error: error.message })
-          }
-        })()
-        return true // 保持消息通道开启
-      }
-
       if (message.type === "fetchData") {
         console.log("Fetching data from background...")
         // 获取当前活动标签页
