@@ -2,7 +2,7 @@
   "name": "douyin-crawler-extension",
   "description": "抖音爬虫插件",
   "private": true,
-  "version": "0.1.1",
+  "version": "0.1.2",
   "scripts": {
     "dev": "rimraf .output && wxt",
     "dev:firefox": "wxt -b firefox",
