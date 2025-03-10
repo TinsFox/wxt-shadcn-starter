@@ -1,6 +1,3 @@
-import { registerJobScheduler } from "@/lib/job-scheduler";
-import { fetchData } from "@/lib/task";
-
 export function defineJobs() {
   // 删除所有现有的定时任务
   chrome.alarms.clearAll();
@@ -57,7 +54,11 @@ export function defineJobs() {
       // 如果找到匹配的标签页，发送消息给content script
       if (tabs.length > 0) {
         const tab = tabs[0];
+        // 切换到标签页
         if (tab.id) {
+          chrome.tabs.update(tab.id, { active: true });
+          // 刷新页面
+          chrome.tabs.reload(tab.id);
           console.log("Sending fetchData message to tab:", tab.id);
           chrome.tabs.sendMessage(tab.id, { type: "fetchData" }, (response) => {
             console.log(
