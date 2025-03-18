@@ -29,10 +29,10 @@ export function defineJobs() {
   });
 
   // 创建测试用的定时任务 - 每2分钟执行一次
-  // chrome.alarms.create("fetchDataTest", {
-  //   periodInMinutes: 2,
-  //   when: Date.now() + 1000, // 1秒后开始第一次执行
-  // });
+  chrome.alarms.create("fetchDataTest", {
+    periodInMinutes: 2,
+    when: Date.now() + 1000, // 1秒后开始第一次执行
+  });
 
   // 监听定时任务
   chrome.alarms.onAlarm.addListener(async (alarm) => {
@@ -43,66 +43,39 @@ export function defineJobs() {
       alarm.name === "fetchData12PM" ||
       alarm.name === "fetchDataTest"
     ) {
-      // 获取所有匹配的标签页
-      const tabs = await chrome.tabs.query({
-        url: [
-          "https://compass.jinritemai.com/*",
-          "https://www.compass.jinritemai.com/*",
-        ],
-      });
+      // 创建新标签页
+      chrome.tabs.create(
+        {
+          url: "https://compass.jinritemai.com/shop/talent-list",
+          active: true,
+        },
+        (tab) => {
+          // 等待页面加载完成后发送消息
+          const checkAndSendMessage = () => {
+            if (tab.id) {
+              chrome.tabs.sendMessage(
+                tab.id,
+                { type: "fetchData" },
+                (response) => {
+                  if (chrome.runtime.lastError) {
+                    // 如果页面还没准备好，等待后重试
+                    setTimeout(checkAndSendMessage, 1000);
+                  } else {
+                    console.log("Received response from new tab:", response);
+                    // 数据抓取完成后关闭标签页
+                    setTimeout(() => {
+                      if (tab.id) chrome.tabs.remove(tab.id);
+                    }, 5000);
+                  }
+                },
+              );
+            }
+          };
 
-      // 如果找到匹配的标签页，发送消息给content script
-      if (tabs.length > 0) {
-        const tab = tabs[0];
-        // 切换到标签页
-        if (tab.id) {
-          chrome.tabs.update(tab.id, { active: true });
-          // 刷新页面
-          chrome.tabs.reload(tab.id);
-          console.log("Sending fetchData message to tab:", tab.id);
-          chrome.tabs.sendMessage(tab.id, { type: "fetchData" }, (response) => {
-            console.log(
-              "Received response from scheduled fetchData:",
-              response,
-            );
-          });
-        }
-      } else {
-        console.log("No matching tab found for scheduled fetchData");
-        // 如果没有找到匹配的标签页，创建新标签页
-        chrome.tabs.create(
-          {
-            url: "https://compass.jinritemai.com/shop/talent-list",
-            active: false,
-          },
-          (tab) => {
-            // 等待页面加载完成后发送消息
-            const checkAndSendMessage = () => {
-              if (tab.id) {
-                chrome.tabs.sendMessage(
-                  tab.id,
-                  { type: "fetchData" },
-                  (response) => {
-                    if (chrome.runtime.lastError) {
-                      // 如果页面还没准备好，等待后重试
-                      setTimeout(checkAndSendMessage, 1000);
-                    } else {
-                      console.log("Received response from new tab:", response);
-                      // 数据抓取完成后关闭标签页
-                      setTimeout(() => {
-                        if (tab.id) chrome.tabs.remove(tab.id);
-                      }, 5000);
-                    }
-                  },
-                );
-              }
-            };
-
-            // 给页面一些加载时间
-            setTimeout(checkAndSendMessage, 5000);
-          },
-        );
-      }
+          // 给页面一些加载时间
+          setTimeout(checkAndSendMessage, 5000);
+        },
+      );
     }
   });
 }

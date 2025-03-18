@@ -15,9 +15,9 @@ export function CommonApp() {
     // 获取所有定时任务的下次执行时间
     chrome.alarms.getAll((alarms) => {
       const times: { [key: string]: string } = {}
-      alarms.forEach((alarm) => {
+      for (const alarm of alarms) {
         times[alarm.name] = new Date(alarm.scheduledTime).toLocaleString()
-      })
+      }
       setNextFetchTimes(times)
     })
   }, [])
@@ -58,9 +58,28 @@ export function CommonApp() {
     // 更新显示时间
     chrome.alarms.getAll((alarms) => {
       const times: { [key: string]: string } = {}
-      alarms.forEach((alarm) => {
+      for (const alarm of alarms) {
         times[alarm.name] = new Date(alarm.scheduledTime).toLocaleString()
-      })
+      }
+      setNextFetchTimes(times)
+    })
+  }
+
+  const createDelayedAlarm = (minutes: number) => {
+    const alarmName = `fetchData${minutes}min`
+    const when = Date.now() + minutes * 60 * 1000
+
+    chrome.alarms.create(alarmName, {
+      when,
+      periodInMinutes: 0, // 不重复的定时任务
+    })
+
+    // 更新显示时间
+    chrome.alarms.getAll((alarms) => {
+      const times: { [key: string]: string } = {}
+      for (const alarm of alarms) {
+        times[alarm.name] = new Date(alarm.scheduledTime).toLocaleString()
+      }
       setNextFetchTimes(times)
     })
   }
@@ -143,11 +162,17 @@ export function CommonApp() {
         <div className="flex flex-col pt-2 space-y-3">
           <div className="text-sm text-zinc-600 dark:text-zinc-400">
             下次抓取时间:
-            <div>11点: {nextFetchTimes["fetchData11AM"] || "未设置"}</div>
-            <div>12点: {nextFetchTimes["fetchData12PM"] || "未设置"}</div>
-            <div>
-              测试(2分钟): {nextFetchTimes["fetchDataTest"] || "未设置"}
-            </div>
+            <div>11点: {nextFetchTimes.fetchData11AM || "未设置"}</div>
+            <div>12点: {nextFetchTimes.fetchData12PM || "未设置"}</div>
+            <div>测试(2分钟): {nextFetchTimes.fetchDataTest || "未设置"}</div>
+            <div>1分钟后: {nextFetchTimes.fetchData1min || "未设置"}</div>
+            <div>3分钟后: {nextFetchTimes.fetchData3min || "未设置"}</div>
+            <div>5分钟后: {nextFetchTimes.fetchData5min || "未设置"}</div>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={() => createDelayedAlarm(1)}>1分钟后执行</Button>
+            <Button onClick={() => createDelayedAlarm(3)}>3分钟后执行</Button>
+            <Button onClick={() => createDelayedAlarm(5)}>5分钟后执行</Button>
           </div>
           <Button onClick={resetAlarms}>重置定时任务</Button>
           <Button

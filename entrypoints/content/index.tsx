@@ -1,4 +1,3 @@
-import { initBackgroundScript } from "@/lib/handle-background-script"
 import { fetchData } from "@/lib/task.ts"
 
 export default defineContentScript({
