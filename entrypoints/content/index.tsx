@@ -9,6 +9,9 @@ export default defineContentScript({
   async main() {
     console.log("Content script initialized")
 
+    // 添加一个标志来追踪是否正在执行fetchData
+    let isFetchingData = false
+
     await injectScript("/inject.js", {
       keepInDom: true,
     })
@@ -27,7 +30,18 @@ export default defineContentScript({
 
         switch (message.type) {
           case "fetchData":
+            // 如果正在执行fetchData，则直接返回
+            if (isFetchingData) {
+              console.log("Fetch data is already in progress")
+              sendResponse({
+                success: false,
+                error: "Fetch data is already in progress",
+              })
+              return true
+            }
+
             try {
+              isFetchingData = true
               const result = await fetchData()
               console.log("Fetch data result:", result)
               sendResponse({ success: true, data: result })
@@ -37,6 +51,8 @@ export default defineContentScript({
                 success: false,
                 error: error instanceof Error ? error.message : String(error),
               })
+            } finally {
+              isFetchingData = false
             }
             break
 

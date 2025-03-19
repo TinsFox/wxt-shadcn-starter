@@ -9,6 +9,7 @@ import { TaskQueue } from "./queue";
 import { wait, getTargetDates } from "./utils";
 
 export async function fetchData() {
+  console.log("fetchData: ", new Date().toISOString());
   // 初始配置任务
   const queue = new TaskQueue({
     maxRetries: 3,
